@@ -1,0 +1,952 @@
+/* ═══════════════════════════════════════════════════════════
+   Kalima — 設計系統
+   視覺語彙：午夜沙漠（深青藍）× 黃銅金 × 幾何星紋（girih）
+   ═══════════════════════════════════════════════════════════ */
+
+@import '@fontsource/amiri/400.css';
+@import '@fontsource/amiri/700.css';
+@import '@fontsource/noto-sans-arabic/400.css';
+@import '@fontsource/noto-sans-arabic/600.css';
+@import '@fontsource-variable/outfit';
+
+:root {
+  /* 深色（預設）—— 午夜沙漠 */
+  --bg: #0c1a21;
+  --bg-2: #0f2029;
+  --surface: #14303c;
+  --surface-2: #1b4050;
+  --surface-3: #23505f;
+  --line: rgba(196, 160, 92, 0.2);
+  --line-strong: rgba(196, 160, 92, 0.4);
+
+  --gold: #c4a05c;
+  --gold-soft: #dfc89a;
+  --gold-dim: rgba(196, 160, 92, 0.12);
+  --teal: #4a9e99;
+  --henna: #b86b58;
+
+  --text: #f3e9d6;
+  --text-2: #c3d0d3;
+  --text-dim: #8ba0a6;
+
+  --danger: #cf6e5c;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.18);
+
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-sm: 10px;
+
+  --font-ui: 'Outfit Variable', 'Noto Sans Arabic', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  --font-ar-display: 'Amiri', 'Noto Sans Arabic', serif;
+  --font-ar-ui: 'Noto Sans Arabic', 'Amiri', sans-serif;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --bar-h: 56px;
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  /* 淺色 —— 羊皮紙 */
+  --bg: #faf2e2;
+  --bg-2: #f4e8d2;
+  --surface: #fffdf8;
+  --surface-2: #f6ead4;
+  --surface-3: #ecdcbe;
+  --line: rgba(140, 100, 40, 0.18);
+  --line-strong: rgba(140, 100, 40, 0.35);
+
+  --gold: #9a7232;
+  --gold-soft: #7d5a24;
+  --gold-dim: rgba(154, 114, 50, 0.09);
+  --teal: #2a7a76;
+  --henna: #9c4e38;
+
+  --text: #2a2318;
+  --text-2: #574b39;
+  --text-dim: #857866;
+
+  --danger: #a3402c;
+  --shadow: 0 2px 10px rgba(90, 65, 25, 0.1);
+  --shadow-sm: 0 1px 5px rgba(90, 65, 25, 0.08);
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 幾何星紋底紋 —— 八角星（khatam）連續花磚，極淡 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%23d9a94e' stroke-width='1' stroke-opacity='.13'%3E%3Cpath d='M40 6 48 22 66 22 54 34 60 52 40 42 20 52 26 34 14 22 32 22Z'/%3E%3Cpath d='M0 40 12 28 24 40 12 52Z'/%3E%3Cpath d='M80 40 68 28 56 40 68 52Z'/%3E%3Cpath d='M40 80 28 68 40 56 52 68Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+:root[data-theme='light'] body::before {
+  opacity: 0.7;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* ── 版面骨架 ─────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page {
+  flex: 1;
+  padding: 0 18px calc(28px + var(--safe-bottom));
+  animation: page-in 0.26s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── 頂端列 ───────────────────────────────────────────── */
+
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding-top: var(--safe-top);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.appbar-inner {
+  min-height: var(--bar-h);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.appbar h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* 教室內頁用的 header：icon + 標題/副標題左對齊 */
+.appbar-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appbar-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: var(--gold);
+  background: var(--gold-dim);
+  border: 1px solid var(--line);
+}
+
+.appbar-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.appbar-title {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.appbar-subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.3;
+}
+
+.appbar .brand {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-inline-start: 6px;
+}
+
+.appbar .brand .ar {
+  font-family: var(--font-ar-display);
+  font-size: 26px;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.appbar .brand .zh {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--text-2);
+  flex: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.icon-btn:active {
+  background: var(--gold-dim);
+  color: var(--gold);
+}
+
+.icon-btn.accent {
+  color: var(--gold);
+}
+
+/* ── 卡片 ─────────────────────────────────────────────── */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 米哈拉布拱門（清真寺壁龕）造型 —— 單字卡主視覺 */
+.mihrab {
+  position: relative;
+  background: linear-gradient(170deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line-strong);
+  border-radius: 130px 130px var(--radius) var(--radius);
+  padding: 34px 22px 24px;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.mihrab::before {
+  content: '';
+  position: absolute;
+  inset: 7px 7px 7px 7px;
+  border: 1px solid var(--line);
+  border-radius: 124px 124px 14px 14px;
+  pointer-events: none;
+}
+
+/* ── 阿拉伯文排版 ─────────────────────────────────────── */
+
+.ar {
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-family: var(--font-ar-display);
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+.ar-hero {
+  font-family: var(--font-ar-display);
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-size: clamp(44px, 13vw, 68px);
+  line-height: 1.6;
+  color: var(--gold-soft);
+  font-weight: 700;
+  margin: 0;
+  /* 母音符號需要足夠行高才不會被裁掉 */
+  padding: 6px 0;
+}
+
+/* 使用者還沒學過阿拉伯字母，所以拼音是主角、阿拉伯文是配角 */
+.translit-hero {
+  font-family: var(--font-ui);
+  font-size: clamp(34px, 10vw, 46px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--gold-soft);
+  margin: 0;
+  word-break: break-word;
+}
+
+.ar-sub {
+  font-family: var(--font-ar-display);
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-size: 30px;
+  line-height: 1.9;
+  color: var(--text-2);
+  margin: 2px 0 0;
+  padding: 2px 0;
+}
+
+.ar-line {
+  font-family: var(--font-ar-display);
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-size: 25px;
+  line-height: 2;
+  color: var(--text);
+}
+
+.translit {
+  font-family: var(--font-ui);
+  font-style: italic;
+  color: var(--teal);
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+
+/* ── 表單 ─────────────────────────────────────────────── */
+
+.field {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-size: 16px; /* iOS 不要自動放大 */
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field:focus {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+
+.field::placeholder {
+  color: var(--text-dim);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 16px;
+  transition: transform 0.12s, opacity 0.15s, background 0.15s;
+  border: 1px solid transparent;
+}
+
+.btn:active {
+  transform: scale(0.975);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+.btn-primary {
+  background: linear-gradient(160deg, var(--gold), #a68338);
+  color: #17110a;
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme='light'] .btn-primary {
+  color: #fff9ec;
+}
+
+.btn-ghost {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  color: var(--danger);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ── 標籤／分類 ───────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--gold-dim);
+  border-color: var(--line-strong);
+  color: var(--gold);
+}
+
+.chip-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 18px 2px;
+  margin: 0 -18px;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--gold-dim);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── 列表 ─────────────────────────────────────────────── */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-align: start;
+  width: 100%;
+  transition: transform 0.12s, border-color 0.15s;
+}
+
+.row:active {
+  transform: scale(0.988);
+  border-color: var(--line-strong);
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 列表也一樣：拼音在上、阿拉伯文在下 */
+.row-translit {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--gold-soft);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-zh {
+  font-size: 14.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-ar {
+  font-family: var(--font-ar-display);
+  direction: rtl;
+  font-size: 21px;
+  line-height: 1.8;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 可點擊發音的詞形（複數、詞根） */
+.speakable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+  text-align: start;
+  border-bottom: 1px solid var(--line);
+  transition: opacity 0.15s;
+}
+
+.speakable:last-child {
+  border-bottom: none;
+}
+
+.speakable:active {
+  opacity: 0.6;
+}
+
+.speakable .form-translit {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--gold-soft);
+}
+
+.speakable .form-ar {
+  font-family: var(--font-ar-display);
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-size: 22px;
+  line-height: 1.8;
+  color: var(--text-2);
+}
+
+/* ── 浮動按鈕 ─────────────────────────────────────────── */
+
+.fab {
+  position: fixed;
+  z-index: 25;
+  right: max(16px, calc(50vw - 360px + 16px));
+  bottom: calc(20px + var(--safe-bottom));
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--gold), #a68338);
+  color: #17110a;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--line);
+  transition: transform 0.14s;
+}
+
+.fab:active {
+  transform: scale(0.92);
+}
+
+/* ── Bottom Sheet ─────────────────────────────────────── */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  animation: fade-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.sheet {
+  position: fixed;
+  z-index: 61;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0 auto;
+  max-width: 720px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line-strong);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 10px 18px calc(20px + var(--safe-bottom));
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.4);
+  animation: sheet-up 0.28s cubic-bezier(0.22, 0.9, 0.3, 1);
+  max-height: 86dvh;
+  overflow-y: auto;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.sheet-grip {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  margin: 4px auto 14px;
+}
+
+.sheet h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 8px;
+  border-radius: var(--radius-sm);
+  text-align: start;
+  font-size: 16px;
+  transition: background 0.14s;
+}
+
+.sheet-item:active {
+  background: var(--surface);
+}
+
+.sheet-item .label {
+  flex: 1;
+}
+
+.sheet-item.danger {
+  color: var(--danger);
+}
+
+/* ── 其他 ─────────────────────────────────────────────── */
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 26px 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-dim);
+}
+
+.empty .ar {
+  font-size: 46px;
+  color: var(--gold);
+  opacity: 0.55;
+  margin-bottom: 14px;
+}
+
+.muted {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.spin {
+  display: inline-block;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Arabic Loading 動畫 ── */
+.arabic-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.arabic-loading--full-page {
+  min-height: 60dvh;
+}
+
+.arabic-loading__svg {
+  display: block;
+}
+
+.arabic-loading__label {
+  color: var(--text-dim);
+  font-size: 14px;
+  font-family: var(--font-ui);
+  letter-spacing: 0.02em;
+  animation: arabic-fade 2s ease-in-out infinite;
+}
+
+@keyframes arabic-cw {
+  to { transform: rotate(360deg); }
+}
+@keyframes arabic-ccw {
+  to { transform: rotate(-360deg); }
+}
+@keyframes arabic-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes arabic-fade {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.toast {
+  position: fixed;
+  z-index: 90;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(88px + var(--safe-bottom));
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  padding: 11px 18px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  box-shadow: var(--shadow);
+  animation: toast-in 0.24s cubic-bezier(0.22, 0.9, 0.3, 1);
+  max-width: calc(100% - 36px);
+  text-align: center;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+/* 分隔用的小菱形飾條 */
+.divider-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px 0;
+  color: var(--gold);
+  opacity: 0.5;
+}
+
+.divider-ornament::before,
+.divider-ornament::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+/* ── 學習教室 ─────────────────────────────────────────── */
+
+/* 教室徽章：金色線條圖示放在圓形的星紋底座上 */
+.emblem {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--gold);
+  background: var(--gold-dim);
+  border: 1px solid var(--line-strong);
+}
+
+.emblem.lg {
+  width: 54px;
+  height: 54px;
+  border-radius: 17px;
+}
+
+.room-row {
+  gap: 14px;
+}
+
+.room-name {
+  font-size: 16.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.room-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+/* 建立教室時挑徽章 */
+.emblem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  gap: 10px;
+}
+
+.emblem-pick {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.emblem-pick[aria-pressed='true'] {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── 分享 ─────────────────────────────────────────────── */
+
+.share-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 8px;
+  padding: 13px 15px;
+  border-radius: var(--radius);
+  background: var(--surface-2, var(--surface));
+  border: 1px dashed var(--line-strong);
+  color: var(--gold-soft);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.share-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+}
+
+/* QR Code 用主題色，前景金色、背景跟 surface 同色 */
+.qr-box {
+  margin: 14px 8px 0;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+
+.qr svg {
+  width: min(210px, 60vw);
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.qr rect {
+  fill: var(--gold);
+}
+
+.qr-box .muted {
+  color: var(--text-dim);
+}

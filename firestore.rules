@@ -1,0 +1,122 @@
+rules_version = '2';
+
+/*  Kalima — 學習教室權限模型
+
+    「有連結就能看，要編輯才要登入。」
+
+    ─ roomId 是 100 bits 的隨機字串，本身就是通行證：知道它才讀得到，
+      而且 list 一律禁止，所以沒有人能把全站教室列出來慢慢試。
+    ─ 訪客在背景會拿到一個匿名身分（他們不會察覺），所以 request.auth
+      永遠存在；真正的分界線是「有沒有用 Google 帳號登入」。
+    ─ 寫入一律需要 Google 帳號，而且必須是教室擁有者，或這間教室
+      開著「開放編輯」。                                                */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ── 身分 ─────────────────────────────────────────────── */
+
+    function signedIn() {
+      return request.auth != null;               // 含匿名訪客
+    }
+    function uid() {
+      return request.auth.uid;
+    }
+    // 用 Google 登入的真實帳號；匿名訪客不算
+    function account() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    /* ── 教室 ─────────────────────────────────────────────── */
+
+    function roomOf(roomId) {
+      return get(/databases/$(database)/documents/rooms/$(roomId)).data;
+    }
+    // 寫卡片時要查教室設定；教室文件本身用 resource.data 就好，不必多讀一次
+    function canEditCards(roomId) {
+      let room = roomOf(roomId);
+      return account() && (room.ownerUid == uid() || room.openEdit == true);
+    }
+
+    function validRoom() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 40
+             && d.emblem is string && d.emblem.size() <= 20
+             && d.openEdit is bool
+             && d.ownerUid is string
+             && d.keys().hasOnly([
+                  'name', 'emblem', 'ownerUid', 'ownerName',
+                  'openEdit', 'cardCount', 'createdAt', 'updatedAt'
+                ]);
+    }
+
+    match /rooms/{roomId} {
+      allow get: if true;              // 有連結就看得到，不必登入
+      allow list: if false;            // 但不能把所有教室列出來
+
+      allow create: if account()
+                    && request.resource.data.ownerUid == uid()
+                    && request.resource.data.cardCount == 0
+                    && validRoom();
+
+      // 擁有者可以改設定；其他有編輯權的人只能動卡片張數與更新時間
+      allow update: if (
+                      account()
+                      && resource.data.ownerUid == uid()
+                      && request.resource.data.ownerUid == resource.data.ownerUid
+                      && validRoom()
+                    ) || (
+                      account()
+                      && resource.data.openEdit == true
+                      && request.resource.data.diff(resource.data)
+                           .affectedKeys().hasOnly(['cardCount', 'updatedAt'])
+                    );
+
+      allow delete: if account() && resource.data.ownerUid == uid();
+
+      /* 教室裡的單字卡：任何人都能讀（連結即權限），寫入要登入 */
+      match /cards/{cardId} {
+        allow read: if true;
+
+        allow create, update: if canEditCards(roomId)
+                              && request.resource.data.size() < 40
+                              && request.resource.data.arabic is string
+                              && request.resource.data.arabic.size() <= 200;
+
+        allow delete: if canEditCards(roomId);
+      }
+    }
+
+    /* ── 我的教室清單（只有自己看得到）───────────────────── */
+
+    match /users/{u}/rooms/{roomId} {
+      allow read, write: if account() && u == uid();
+    }
+
+    /* ── 共用快取：AI 產生的單字內容（產生一次，全站共用，省 API 費用）──
+       訪客也要能讀，不然沒登入就看不到已經做好的卡片內容。            */
+
+    match /lexicon/{hash} {
+      allow get: if signedIn();
+      allow list: if false;
+      // 只能新增，不能竄改或刪除既有內容
+      allow create: if signedIn()
+                    && request.resource.data.keys().hasAll(['arabic', 'chinese'])
+                    && request.resource.data.arabic is string
+                    && request.resource.data.arabic.size() <= 200
+                    && request.resource.data.size() < 30;
+      allow update, delete: if false;
+    }
+
+    /* ── 共用快取：ElevenLabs 產生的語音（base64 mp3）──────── */
+
+    match /audio/{hash} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+                    && request.resource.data.mp3 is string
+                    && request.resource.data.mp3.size() <= 700000;
+      allow update, delete: if false;
+    }
+  }
+}

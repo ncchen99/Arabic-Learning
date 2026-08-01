@@ -1,0 +1,272 @@
+# كَلِمَة Kalima · 阿拉伯語學習教室
+
+建一間**學習教室**，把單字卡整理在一起，再把連結分享出去 ——
+**拿到連結的人不用註冊就能進來看單字、聽發音**，要編輯才需要登入。
+
+單字卡由 AI 產生，**以拉丁拼音為主、阿拉伯文為輔**（設計給還沒學過阿拉伯字母的人），
+附阿拉伯語母語者發音、複數、詞根與文化小知識。手機優先的 PWA，可以裝到桌面離線使用。
+
+**線上網址**：<https://kalima-arabic.web.app>
+
+---
+
+## 學習教室
+
+```
+老師（登入）           學生 A（沒帳號）      學生 B（登入）
+   │                      │                    │
+   └─ 建立教室 ──分享連結──┴────────────────────┘
+        │                 │                    │
+        ├─ 新增／刪除卡片   ├─ 看單字、聽發音     ├─ 看單字、聽發音
+        ├─ 標記重點         ├─ 複習模式          ├─ 新增卡片＊
+        └─ 改設定、刪教室    └─ 搜尋              └─ 標記重點＊
+                                              ＊教室設成「開放編輯」時
+```
+
+教室 ID 是 20 個隨機字元（約 100 bits），**連結本身就是通行證**：
+知道 ID 才讀得到，而且安全規則禁止列舉，沒有人能把全站教室掃出來。
+擁有者可以隨時切換成「只有我能編輯」，其他人就變成唯讀。
+
+**訪客怎麼在沒有帳號的情況下讀資料**：App 會在背景幫沒登入的人開一個
+Firebase 匿名身分（使用者完全不會察覺，也不用做任何事），
+所以安全規則永遠看得到 `request.auth`，可以把「讀」和「寫」乾淨地分開 ——
+真正的分界線是 `sign_in_provider != 'anonymous'`，也就是有沒有用 Google 登入。
+匿名身分 30 天沒用就會自動清掉。
+
+---
+
+## 單字卡怎麼產生
+
+```
+使用者輸入「咖啡」或「قَهْوَة」
+        │
+        ├─→ 先查 Firestore 的 lexicon 共用快取
+        │     有 → 直接用（0 成本、瞬間完成）
+        │
+        └─→ 沒有 → Vercel Function ─→ OpenAI 結構化輸出
+                                        （拼音、詞條、母音符號、詞性、
+                                          複數、詞根、分類、小知識）
+                                   ←─ 存回 lexicon 快取
+
+按播放
+        ├─→ 記憶體 → IndexedDB（離線可用）→ Firestore audio 快取
+        └─→ 都沒有 → Vercel Function ─→ ElevenLabs TTS ─→ 三層都存起來
+```
+
+**每個字的內容和語音一輩子只產生一次**，之後所有教室共用，所以第二次查同樣的字
+是瞬間完成且不花錢的。
+
+### 為什麼用 AI 而不是 Google 翻譯
+
+Google 翻譯只會給你一個沒有母音符號的詞，但初學者最需要的正是**怎麼唸**
+（阿拉伯文平常不寫短母音，看到 `قهوة` 根本不知道發音；沒學過字母的話更是一片空白）。
+用 OpenAI 一次呼叫就能同時拿到：拉丁拼音、帶母音符號的詞條、詞性與陰陽性、
+不規則複數（含拼音）、三字母詞根、自動分類、以及文化小知識。
+這些是翻譯 API 給不了的。
+
+---
+
+## 架構
+
+| 元件 | 位置 | 說明 |
+|---|---|---|
+| 前端 PWA | Firebase Hosting `kalima-arabic.web.app` | Vite + React，純靜態 |
+| API 代理 | Vercel `kalima-api.vercel.app` | 保管 OpenAI／ElevenLabs 金鑰 |
+| 資料庫 | Firestore（asia-east1） | 教室、單字卡 + 共用快取 |
+| 登入 | Firebase Auth | Google 登入（編輯用）＋匿名（訪客用）|
+
+**金鑰安全**：`OPENAI_API_KEY` 與 `ELEVENLABS_API_KEY` 只存在 Vercel 的加密環境變數裡，
+永遠不會出現在前端程式碼或網路請求中。API 端另外有三道防線：
+來源白名單（只接受本站網域）、每 IP 速率限制、輸入長度與內容檢查
+（`/api/tts` 只接受含阿拉伯字母的文字，避免被當成免費的通用 TTS 濫用）。
+
+### Firestore 資料結構
+
+```
+rooms/{roomId}               學習教室：name、emblem、ownerUid、openEdit、cardCount
+  └─ cards/{cardId}          教室裡的單字卡（含 searchIndex、starred、addedBy）
+users/{uid}/rooms/{roomId}   「我的教室」清單（只有本人看得到）
+lexicon/{hash}               AI 產生的內容，全站共用；可讀、可新增，不可修改或刪除
+audio/{hash}                 ElevenLabs 語音 base64，同上
+```
+
+### 安全規則（`firestore.rules`）
+
+| 動作 | 沒登入 | 訪客（匿名） | Google 登入 | 擁有者 |
+|---|---|---|---|---|
+| 讀教室與卡片（要有連結） | ✅ | ✅ | ✅ | ✅ |
+| 列舉全站教室 | ❌ | ❌ | ❌ | ❌ |
+| 讀共用快取（lexicon／audio）| ❌ | ✅ | ✅ | ✅ |
+| 新增／刪除卡片、標記重點 | ❌ | ❌ | 開放編輯時 ✅ | ✅ |
+| 改教室設定、刪教室 | ❌ | ❌ | ❌ | ✅ |
+| 建立教室 | ❌ | ❌ | ✅ | — |
+
+共用快取只能新增、不能修改或刪除，所以別人查過的字不會被竄改。
+教室文件本身，非擁有者只能更新 `cardCount` 與 `updatedAt` 兩個欄位。
+
+規則有一份用真實 ID token 打 Firestore REST API 的驗證腳本
+（`scripts/test-rules.mjs`），上面每一格都對應一個測試案例。
+它需要 `roles/iam.serviceAccountTokenCreator` 才能簽 custom token，
+平常不要留著這個權限，測完就收回：
+
+```bash
+node scripts/test-rules.mjs
+```
+
+---
+
+## 開發
+
+```bash
+npm install
+npm run dev
+```
+
+前端預設會打線上的 API（`https://kalima-api.vercel.app`）。
+要改用本機 API，建立 `.env.local`：
+
+```
+VITE_API_BASE=http://localhost:3000
+```
+
+### 常用指令
+
+| 指令 | 用途 |
+|---|---|
+| `npm run dev` | 本機開發 |
+| `npm run build` | 建置到 `dist/` |
+| `npm run deploy` | 建置並部署到 Firebase Hosting |
+| `npm run icons` | 重新產生 App Icon 與整套 PWA 圖示 |
+| `node scripts/test-rules.mjs` | 用真實 token 驗證線上的 Firestore 安全規則 |
+
+### 部署 API（Vercel）
+
+```bash
+cd server
+vercel deploy --prod
+```
+
+環境變數（在 Vercel 專案設定，或用 `vercel env add`）：
+
+| 變數 | 預設 | 說明 |
+|---|---|---|
+| `OPENAI_API_KEY` | — | 必填 |
+| `ELEVENLABS_API_KEY` | — | 必填 |
+| `OPENAI_MODEL` | `gpt-5.6-luna` | 見下方模型比較 |
+| `ELEVENLABS_MODEL` | `eleven_multilingual_v2` | |
+| `ALLOWED_ORIGINS` | 本站網域 + localhost | 逗號分隔 |
+
+---
+
+## 模型比較（實測，2026-08）
+
+用同一組 schema 與指令、同一批單字實測「未經後處理的原始輸出」乾淨率：
+
+| 模型 | 有例句時 | 拿掉例句後 | 延遲 |
+|---|---|---|---|
+| **gpt-5.6-luna** ✅ 使用中 | 6/10 | **8/8** | 2–3s |
+| gpt-5.4-mini-2026-03-17 | 5/10 | 8/8 | 2–3s |
+| gpt-5.6-sol | 1/6 | 未測 | 8–32s |
+
+**關鍵發現**：欄位越多、`maxLength` 約束越緊，模型越容易在字串結尾陷入重複迴圈
+或混入其他文字系統（喬治亞文、希伯來文、坎那達文都出現過）。拿掉例句欄位後
+兩個模型都變乾淨，此時 luna 的內容品質明顯較好——它會點出構詞關聯
+（例如「開啟」和「鑰匙」同字根）、文法性別規則，而 gpt-5.4-mini 傾向寫
+與阿拉伯語無關的生活常識，甚至產生過錯誤的阿拉伯語例句。
+
+`gpt-5.6-sol` 雖然是更大的模型，但在這種「短、緊約束」的結構化輸出上表現最差，
+出現過「家。家。家。」重複 44 次的崩潰，且延遲不適合互動式使用。
+
+程式端仍保留三層防護（重複偵測、異常字元偵測、note 只取前兩句），
+失敗時自動重試一次，所以偶發的模型不穩定不會被使用者看到。
+
+---
+
+## 發音的聲音
+
+全部是 ElevenLabs 語音庫裡的**阿拉伯語母語者**（professional voices），
+可以在「設定 → 發音聲音」切換，每個都能先試聽：
+
+| 代號 | 名字 | 口音 | 說明 |
+|---|---|---|---|
+| `sana` （預設）| Sana | 現代標準阿拉伯語 | 女聲，清晰標準，適合初學者 |
+| `anas` | Anas | 現代標準阿拉伯語 | 男聲，沉穩清楚 |
+| `tariq` | Tariq | 現代標準阿拉伯語 | 男聲，低沉，像新聞播報 |
+| `fatima` | Fatima | 埃及腔 | 女聲，日常口語感 |
+| `hasawi` | Hasawi | 沙烏地腔 | 男聲，海灣地區 |
+
+聲音清單同時寫在 `src/lib/voices.js`（前端）與 `server/api/tts.js`（後端），
+兩邊的 id 必須一致 —— **id 會進到語音快取的雜湊**，所以換聲音只要換 id，
+舊的快取不會被誤用，也不需要手動清 Firestore。
+
+> 早期版本因為 ElevenLabs 免費方案不能透過 API 使用語音庫的專業聲音，
+> 只能用 premade 的英語聲音唸阿拉伯文（帶英語腔）。升級付費方案後已全部換掉，
+> 舊的 `f`／`m` 代號保留成 `sana`／`anas` 的別名，還沒更新的裝置不會壞掉。
+
+---
+
+## 檔案結構
+
+```
+index.html                  進入點
+vite.config.js              Vite + PWA 設定（manifest、Service Worker）
+firebase.json               Hosting 與 Firestore 設定
+firestore.rules             安全規則
+scripts/make-icon.mjs       產生 App Icon 來源 SVG（八角星 khatam）
+scripts/test-rules.mjs      安全規則驗證（打真實的 Firestore REST API）
+public/                     PWA 圖示（由 @vite-pwa/assets-generator 產生）
+src/
+  main.jsx                  掛載 React
+  App.jsx                   路由 + 登入狀態 + 主題
+  styles/global.css         設計系統（午夜沙漠 × 黃銅金 × 幾何星紋）
+  lib/
+    firebase.js             Firebase 初始化、Google 登入、訪客匿名身分
+    api.js                  呼叫 Vercel API
+    store.js                Firestore 讀寫（教室、卡片、共用快取）
+    audio.js                三層語音快取
+    arabic.js               阿拉伯文正規化（搜尋用）與雜湊
+    categories.js           分類清單與對應的 Hugeicons 圖示
+    emblems.js              教室徽章圖示
+    voices.js               發音聲音清單
+  components/               AppBar、BottomSheet、PlayButton、ShareSheet、
+                            GoogleButton／LoginSheet、Toast
+  pages/
+    Rooms.jsx               首頁：我的教室
+    NewRoom.jsx             建立教室
+    RoomShell.jsx           一間教室底下所有頁面共用的資料訂閱
+    Room.jsx                教室首頁：清單、搜尋、分類
+    Add / CardDetail / Study / RoomSettings / Settings
+server/                     Vercel 專案（API 代理）
+  api/generate.js           OpenAI 結構化輸出
+  api/tts.js                ElevenLabs 語音
+  api/_shared.js            CORS、速率限制
+```
+
+---
+
+## 設計說明
+
+**視覺**：午夜沙漠深青藍配黃銅金，背景是極淡的八角星（khatam）連續花磚。
+單字卡主視覺用米哈拉布（清真寺壁龕）拱門造型。
+阿拉伯文用 Amiri 字體（傳統 naskh 體），行高特別加大以免母音符號被裁切。
+另有羊皮紙淺色主題，可在設定裡切換或跟隨系統。
+
+**拼音為主**：使用者不一定學過阿拉伯字母，所以每張卡的主角是**拉丁拼音**
+（大字、金色），阿拉伯文放在下面當對照。列表、複習模式都是同樣的階層。
+複數與詞根整列都可以點來聽發音。
+
+**為什麼沒有例句**：早期版本有例句，但實測發現欄位越多，LLM 越容易在結尾
+出現重複迴圈或混入其他語言的碎片。拿掉例句後輸出穩定度從 5/8 提升到 8/8，
+而且對「快速建立字庫」這個用途來說，拼音、複數、詞根比例句更實用。
+
+**圖示**：介面與分類全部用 Hugeicons 的線條圖示，沒有任何 emoji ——
+emoji 在不同系統長得不一樣，也跟這套細線條、單一金色的視覺搭不起來。
+16 個分類各有對應的圖示（宗教文化用清真寺、動詞用閃電、形容詞用調色盤…），
+教室徽章另外有 8 個可選。
+
+**手機優先**：左上角返回鍵、置中標題，所有選單都用 Bottom Sheet
+（可下拉關閉），不用桌機式下拉選單。功能拆成獨立頁面而不是彈窗堆疊。
+電腦上一樣可用，內容置中最大寬度 720px。
+
+**App Icon**：八角星（khatam）花磚徽章，伊斯蘭幾何最具代表性的母題，
+16px 也認得出來。幾何用 `scripts/make-icon.mjs` 計算產生，不是手畫的。

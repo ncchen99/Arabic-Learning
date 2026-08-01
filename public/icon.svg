@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16394a"/>
+      <stop offset="1" stop-color="#0a161d"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#f2d79b"/>
+      <stop offset="0.45" stop-color="#d9a94e"/>
+      <stop offset="1" stop-color="#a9762a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 滿版底色，maskable 安全 -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- 外圈細環 -->
+  <circle cx="256" cy="256" r="228" fill="none" stroke="#d9a94e" stroke-opacity=".28" stroke-width="3"/>
+
+  <!-- 主體：八角星 -->
+  <path d="M256.00 60.00L301.16 146.98L394.59 117.41L365.02 210.84L452.00 256.00L365.02 301.16L394.59 394.59L301.16 365.02L256.00 452.00L210.84 365.02L117.41 394.59L146.98 301.16L60.00 256.00L146.98 210.84L117.41 117.41L210.84 146.98Z" fill="url(#gold)"/>
+
+  <!-- 星內挖空的八邊形，做出「花磚」的層次 -->
+  <path d="M295.80 159.92L352.08 216.20L352.08 295.80L295.80 352.08L216.20 352.08L159.92 295.80L159.92 216.20L216.20 159.92Z" fill="url(#bg)"/>
+
+  <!-- 中央小八角星：內外半徑比拉高，才像花磚的圓花飾而不是星芒 -->
+  <path d="M287.38 180.24L294.18 217.82L331.76 224.62L310.00 256.00L331.76 287.38L294.18 294.18L287.38 331.76L256.00 310.00L224.62 331.76L217.82 294.18L180.24 287.38L202.00 256.00L180.24 224.62L217.82 217.82L224.62 180.24L256.00 202.00Z" fill="url(#gold)"/>
+
+  <!-- 中心點綴 -->
+  <circle cx="256" cy="256" r="26" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="11" fill="#f2d79b"/>
+</svg>
