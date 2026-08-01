@@ -7,6 +7,7 @@ import {
   linkWithRedirect,
   onAuthStateChanged,
   signInAnonymously,
+  signInWithCredential,
   signInWithPopup,
   signInWithRedirect,
   signOut,
@@ -40,9 +41,20 @@ export const isGuest = (user) => !user || user.isAnonymous;
    使用者不會看到任何登入畫面，但安全規則狀態仍然包含 request.auth。 */
 export function watchAuth(cb) {
   // 若從轉址登入（redirect login）回來，處理轉址結果與潛在錯誤
-  getRedirectResult(auth).catch((err) => {
-    console.error('Redirect sign-in error:', err);
-  });
+  getRedirectResult(auth)
+    .then((result) => {
+      if (result?.user) cb(result.user);
+    })
+    .catch((err) => {
+      if (err.code === 'auth/credential-already-in-use' || err.code === 'auth/email-already-in-use') {
+        const credential = GoogleAuthProvider.credentialFromError(err) || err.credential;
+        if (credential) {
+          signInWithCredential(auth, credential).catch((e) => console.error('Credential error:', e));
+        }
+      } else {
+        console.error('Redirect sign-in error:', err);
+      }
+    });
 
   return onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -61,7 +73,13 @@ export async function login() {
       try {
         return await linkWithPopup(current, provider);
       } catch (err) {
-        // 如果匿名帳號要連結的 Google 帳號之前已經註冊過，直接切換到該帳號登入
+        // 如果匿名帳號要連結的 Google 帳號之前已經註冊/登入過，
+        // 提取第一次彈窗輸入所獲得的憑證（credential），直接完成登入，
+        // 避免觸發第二次彈窗導致瀏覽器阻擋（popup-blocked）或重複登入！
+        const credential = GoogleAuthProvider.credentialFromError(err) || err.credential;
+        if (credential) {
+          return await signInWithCredential(auth, credential);
+        }
         if (err.code === 'auth/credential-already-in-use' || err.code === 'auth/email-already-in-use') {
           return await signInWithPopup(auth, provider);
         }
@@ -84,7 +102,12 @@ export async function login() {
         try {
           await linkWithRedirect(current, provider);
           return;
-        } catch {
+        } catch (err) {
+          const credential = GoogleAuthProvider.credentialFromError(err) || err.credential;
+          if (credential) {
+            await signInWithCredential(auth, credential);
+            return;
+          }
           await signInWithRedirect(auth, provider);
           return;
         }
@@ -100,4 +123,5 @@ export async function login() {
 export function logout() {
   return signOut(auth); // watchAuth 會馬上補一個新的匿名身分
 }
+
 
