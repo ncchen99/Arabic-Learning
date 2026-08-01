@@ -2,7 +2,9 @@ import { initializeApp } from 'firebase/app';
 import {
   GoogleAuthProvider,
   getAuth,
+  getRedirectResult,
   linkWithPopup,
+  linkWithRedirect,
   onAuthStateChanged,
   signInAnonymously,
   signInWithPopup,
@@ -35,9 +37,13 @@ provider.setCustomParameters({ prompt: 'select_account' });
 export const isGuest = (user) => !user || user.isAnonymous;
 
 /* 訪客不需要註冊也要能讀教室、聽發音，所以背景幫他們開一個匿名身分。
-   使用者不會看到任何登入畫面，但安全規則仍然看得到 request.auth，
-   可以把「讀」和「寫」清楚分開。 */
+   使用者不會看到任何登入畫面，但安全規則狀態仍然包含 request.auth。 */
 export function watchAuth(cb) {
+  // 若從轉址登入（redirect login）回來，處理轉址結果與潛在錯誤
+  getRedirectResult(auth).catch((err) => {
+    console.error('Redirect sign-in error:', err);
+  });
+
   return onAuthStateChanged(auth, (user) => {
     if (user) {
       cb(user);
@@ -49,25 +55,40 @@ export function watchAuth(cb) {
 
 export async function login() {
   const current = auth.currentUser;
-  try {
-    // 訪客已經有匿名身分，直接升級成 Google 帳號，uid 不變
+
+  const executeLogin = async () => {
     if (current?.isAnonymous) {
-      await linkWithPopup(current, provider);
-    } else {
-      await signInWithPopup(auth, provider);
+      try {
+        return await linkWithPopup(current, provider);
+      } catch (err) {
+        // 如果匿名帳號要連結的 Google 帳號之前已經註冊過，直接切換到該帳號登入
+        if (err.code === 'auth/credential-already-in-use' || err.code === 'auth/email-already-in-use') {
+          return await signInWithPopup(auth, provider);
+        }
+        throw err;
+      }
     }
+    return await signInWithPopup(auth, provider);
+  };
+
+  try {
+    await executeLogin();
   } catch (e) {
-    // 這個 Google 帳號之前登入過（有自己的 uid），就直接切過去
-    if (e.code === 'auth/credential-already-in-use' || e.code === 'auth/email-already-in-use') {
-      await signInWithPopup(auth, provider);
-      return;
-    }
-    // 手機瀏覽器（尤其是 PWA standalone 模式）常常擋彈出視窗，退回轉址登入
+    // 手機瀏覽器、PWA 獨立模式或非同步操作延遲可能觸發 auth/popup-blocked，自動退回轉址登入
     if (
       e.code === 'auth/popup-blocked' ||
       e.code === 'auth/operation-not-supported-in-this-environment' ||
       e.code === 'auth/cancelled-popup-request'
     ) {
+      if (current?.isAnonymous) {
+        try {
+          await linkWithRedirect(current, provider);
+          return;
+        } catch {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+      }
       await signInWithRedirect(auth, provider);
       return;
     }
@@ -79,3 +100,4 @@ export async function login() {
 export function logout() {
   return signOut(auth); // watchAuth 會馬上補一個新的匿名身分
 }
+
