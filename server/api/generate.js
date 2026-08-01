@@ -1,6 +1,6 @@
 /* POST /api/generate  { text }  →  單字卡內容（OpenAI 結構化輸出）
-   使用者輸入中文或阿拉伯語，AI 直接產出阿拉伯語詞條、母音符號、轉寫、
-   分類、詞根、例句與文化提示。比 Google 翻譯多了教學所需的全部欄位，
+   使用者輸入中文或阿拉伯語，AI 產出阿拉伯語詞條/句子、母音符號、轉寫、
+   分類、詞根、詳細說明與文化提示。比 Google 翻譯多了教學所需的全部欄位，
    而且只要一次 API 呼叫。 */
 
 import { cors, rateLimit, readJson } from './_shared.js';
@@ -13,6 +13,19 @@ export const CATEGORIES = [
   '居家生活', '工作學習', '動詞', '形容詞', '宗教文化', '其他',
 ];
 
+const DIACRITICS = /[ؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۨ-ۭـ]/g;
+
+function normalizeArabic(s = '') {
+  return String(s)
+    .replace(DIACRITICS, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .trim();
+}
+
 const SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -21,19 +34,19 @@ const SCHEMA = {
     'pos', 'plural', 'plural_translit', 'root', 'category', 'note',
   ],
   properties: {
-    arabic: { type: 'string', maxLength: 60, description: '標註完整短母音符號(harakat)的現代標準阿拉伯語詞條' },
-    arabic_plain: { type: 'string', maxLength: 60, description: '同一個詞，但不含任何符號，供搜尋比對使用' },
-    transliteration: { type: 'string', maxLength: 60, description: '學術拉丁轉寫，例如 qahwa' },
-    chinese: { type: 'string', maxLength: 30, description: '最主要的繁體中文意思，盡量簡短' },
-    chinese_alt: { type: 'string', maxLength: 60, description: '其他常見中文意思，用「、」分隔；沒有就空字串' },
-    pos: { type: 'string', maxLength: 20, description: '詞性，名詞要註明陰陽性，例如「名詞（陰性）」「動詞」「形容詞」' },
-    plural: { type: 'string', maxLength: 60, description: '名詞的複數形（含母音符號）；非名詞或無複數則空字串' },
-    plural_translit: { type: 'string', maxLength: 60, description: '複數形的拉丁轉寫；plural 為空字串時這裡也是空字串' },
-    root: { type: 'string', maxLength: 20, description: '三字母詞根，字母間以空格分隔，例如「ق ه و」；外來語則空字串' },
+    arabic: { type: 'string', maxLength: 120, description: '標註完整短母音符號(harakat)的阿拉伯語單字或短句' },
+    arabic_plain: { type: 'string', maxLength: 120, description: '同一個單字或短句，但不含任何符號，供搜尋比對使用' },
+    transliteration: { type: 'string', maxLength: 120, description: '學術拉丁轉寫，例如 qahwa 或 urīdu an ashraba l-qahwa' },
+    chinese: { type: 'string', maxLength: 60, description: '最主要的繁體中文意思或翻譯，盡量簡短' },
+    chinese_alt: { type: 'string', maxLength: 90, description: '其他常見中文意思，用「、」分隔；沒有就空字串' },
+    pos: { type: 'string', maxLength: 30, description: '詞性或類型，例如「短句」「動詞短語」「名詞（陰性）」「動詞」「形容詞」' },
+    plural: { type: 'string', maxLength: 90, description: '名詞的複數形（含母音符號）；非名詞、短句或無複數則空字串' },
+    plural_translit: { type: 'string', maxLength: 90, description: '複數形的拉丁轉寫；plural 為空字串時這裡也是空字串' },
+    root: { type: 'string', maxLength: 30, description: '三字母詞根，字母間以空格分隔，例如「ق ه و」；外來語或短句則空字串' },
     category: { type: 'string', enum: CATEGORIES, description: '單字分類' },
     note: {
       type: 'string',
-      maxLength: 105,
+      maxLength: 150,
       description: '用法提示或文化小知識，一到兩句話，40 個中文字以內，以句號結尾',
     },
   },
@@ -46,7 +59,7 @@ const REPEAT = /(.{1,4})\1{6,}/;
 const FOREIGN_SCRIPT =
   /[ऀ-ॿঀ-৿฀-๿Ѐ-ӿ가-힯぀-ヿ֐-׿]/;
 // U+FFFD 取代字元與 Unicode 非字元，出現就代表輸出壞掉了
-const BROKEN_CHAR = /[￰-￿﷐-﷯]/;
+const BROKEN_CHAR = /[\uFFF0-\uFFFF]/;
 
 function looksDegenerate(card) {
   const strings = [
@@ -98,13 +111,23 @@ function tidy(card) {
 
 const INSTRUCTIONS = `你是阿拉伯語教學專家，服務對象是說繁體中文（台灣）的初學者。
 
-使用者會輸入「中文」或「阿拉伯語」，也可能是短句。請據此製作一張單字卡：
-- 阿拉伯語一律使用現代標準阿拉伯語（MSA, الفصحى），不要用方言。
-- 所有阿拉伯語詞條與例句都要標註完整的短母音符號（harakat），這是初學者最需要的。
-- 若使用者輸入的是阿拉伯語，chinese 欄位放它的中文意思；若輸入中文，則翻成阿拉伯語。
-- 名詞請以單數、不帶冠詞的形式作為詞條。動詞請用第三人稱陽性單數過去式（詞典形）。
+使用者會輸入「中文」或「阿拉伯語」，可能是單字或短句。請據此製作一張學習卡片：
+
+【如果使用者輸入阿拉伯語（單字或短句）】
+- arabic 欄位必須直接使用使用者輸入的該阿拉伯單字或句子，絕對不可將其改寫、替換、簡化、補母音符號或強制轉為詞典形（如單數形或動詞原形）。必須完全保持使用者輸入的原文。
+- chinese 欄位填寫該阿拉伯語單字或句子的繁體中文翻譯與介紹，chinese_alt 可放其他常見譯法。
+- transliteration 欄位提供對應使用者輸入原文字句的學術拉丁轉寫。
+- pos 欄位標明詞性或類型（例如「短句」、「動詞短語」、「名詞（陰性）」、「動詞」等）。
+- 若輸入為短句或非名詞，plural、plural_translit、root 若不適用可留空字串。
+
+【如果使用者輸入中文】
+- 將中文翻譯為現代標準阿拉伯語（MSA, الفصحى）。
+- 名詞請以單數、不帶冠詞的形式作為詞條；動詞請用第三人稱陽性單數過去式（詞典形）。
+- 阿拉伯語詞條要標註完整的短母音符號（harakat）。
+
+【通用規則】
 - 所有中文說明使用繁體中文、台灣用語，不要用簡體或中國用語。
-- note 要寫得有趣且實用，例如使用場合、禮節、與文化的關聯，不要空泛。
+- note 要寫得有趣且實用，例如使用場合、禮節、與文化的關聯或文法提示，不要空泛。
   一到兩句話就好（40 個中文字以內），寫滿字數不是目標，簡短精準比長篇更好。
 - note 只寫給學習者看的內容本身，不要提到字數、格式或你被交代的規則。
 - 使用者沒學過阿拉伯字母，主要靠拉丁轉寫學發音，所以轉寫要準確、一致，
@@ -128,6 +151,8 @@ export default async function handler(req, res) {
   text = typeof text === 'string' ? text.trim() : '';
   if (!text) return res.status(400).json({ error: '請輸入內容' });
   if ([...text].length > 40) return res.status(400).json({ error: '一次最多 40 個字' });
+
+  const isArabicInput = /[؀-ۿ]/.test(text);
 
   async function askOnce() {
     const r = await fetch('https://api.openai.com/v1/responses', {
@@ -178,6 +203,13 @@ export default async function handler(req, res) {
         console.warn('degenerate output', { text, attempt });
         continue;
       }
+
+      if (isArabicInput) {
+        // 直接使用使用者輸入的單字或句子作為卡片的阿拉伯文欄位，不經 AI 改寫或補符號
+        card.arabic = text;
+        card.arabic_plain = normalizeArabic(text);
+      }
+
       res.setHeader('Cache-Control', 'no-store');
       return res.status(200).json({ card: tidy(card) });
     } catch (e) {

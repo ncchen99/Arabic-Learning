@@ -839,23 +839,23 @@ textarea {
 
 /* ── 學習教室 ─────────────────────────────────────────── */
 
-/* 教室徽章：金色線條圖示放在圓形的星紋底座上 */
+/* 教室徽章：金色線條圖示放在精致底座上 */
 .emblem {
   flex: none;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
   color: var(--gold);
   background: var(--gold-dim);
   border: 1px solid var(--line-strong);
 }
 
 .emblem.lg {
-  width: 54px;
-  height: 54px;
-  border-radius: 17px;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
 }
 
 .room-row {

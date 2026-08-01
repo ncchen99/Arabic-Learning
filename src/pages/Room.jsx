@@ -73,14 +73,16 @@ export default function Room({ room, cards, loading, canEdit, isOwner, user, voi
         icon={emblemIcon(room.emblem)}
         subtitle={
           <>
-            {cards.length} 張單字卡
-            <span aria-hidden>·</span>
-            <HugeiconsIcon
-              icon={room.openEdit ? Globe02Icon : SquareLock02Icon}
-              size={12}
-              strokeWidth={2}
-            />
-            {room.openEdit ? '開放編輯' : '唯讀'}
+            <span>{cards.length} 張單字卡</span>
+            <span aria-hidden style={{ opacity: 0.5 }}>·</span>
+            <span className="appbar-badge">
+              <HugeiconsIcon
+                icon={room.openEdit ? Globe02Icon : SquareLock02Icon}
+                size={11}
+                strokeWidth={2}
+              />
+              {room.openEdit ? '開放編輯' : '唯讀'}
+            </span>
           </>
         }
         onBack={() => navigate('/')}
