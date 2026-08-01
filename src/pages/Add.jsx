@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../components/AppBar.jsx';
@@ -19,6 +19,13 @@ export default function Add({ room, uid, voice }) {
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showHint] = useState(() => !localStorage.getItem('arabic_add_hint_seen'));
+
+  useEffect(() => {
+    if (showHint) {
+      localStorage.setItem('arabic_add_hint_seen', 'true');
+    }
+  }, [showHint]);
 
   async function generate(input) {
     const value = (input ?? text).trim();
@@ -58,17 +65,19 @@ export default function Add({ room, uid, voice }) {
       <AppBar title="新增單字卡" onBack={() => navigate(`/r/${room.id}`)} />
 
       <div className="page">
-        <p className="muted" style={{ marginTop: 16 }}>
-          輸入中文或阿拉伯語都可以，AI 會補上拼音、母音符號、複數、詞根和文化小知識，
-          做好的卡片會加進「{room.name}」給大家一起用。
-        </p>
+        {showHint && (
+          <p className="muted" style={{ marginTop: 16 }}>
+            輸入中文或阿拉伯語都可以，AI 會補上拼音、母音符號、複數、詞根和文化小知識，
+            做好的卡片會加進「{room.name}」給大家一起用。
+          </p>
+        )}
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
             generate();
           }}
-          style={{ display: 'flex', gap: 10, marginTop: 6 }}
+          style={{ display: 'flex', gap: 10, marginTop: showHint ? 6 : 16 }}
         >
           <input
             className="field"
