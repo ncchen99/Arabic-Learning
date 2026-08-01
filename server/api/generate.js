@@ -8,7 +8,7 @@ import { cors, rateLimit, readJson } from './_shared.js';
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5.6-luna';
 
 export const CATEGORIES = [
-  '問候寒暄', '日常對話', '飲食', '旅行交通', '購物數字',
+  '日常對話', '飲食', '旅行交通', '購物數字',
   '時間日期', '家庭人物', '身體健康', '情緒感受', '自然天氣',
   '居家生活', '工作學習', '動詞', '形容詞', '宗教文化', '其他',
 ];
@@ -34,9 +34,9 @@ const SCHEMA = {
     'pos', 'plural', 'plural_translit', 'root', 'category', 'note',
   ],
   properties: {
-    arabic: { type: 'string', maxLength: 120, description: '標註完整短母音符號(harakat)的阿拉伯語單字或短句' },
+    arabic: { type: 'string', maxLength: 120, description: '標註完整短母音符號(harakat)的敘利亞阿拉伯語單字或短句' },
     arabic_plain: { type: 'string', maxLength: 120, description: '同一個單字或短句，但不含任何符號，供搜尋比對使用' },
-    transliteration: { type: 'string', maxLength: 120, description: '學術拉丁轉寫，例如 qahwa 或 urīdu an ashraba l-qahwa' },
+    transliteration: { type: 'string', maxLength: 120, description: '敘利亞阿拉伯語學術拉丁轉寫' },
     chinese: { type: 'string', maxLength: 60, description: '最主要的繁體中文意思或翻譯，盡量簡短' },
     chinese_alt: { type: 'string', maxLength: 90, description: '其他常見中文意思，用「、」分隔；沒有就空字串' },
     pos: { type: 'string', maxLength: 30, description: '詞性或類型，例如「短句」「動詞短語」「名詞（陰性）」「動詞」「形容詞」' },
@@ -47,7 +47,7 @@ const SCHEMA = {
     note: {
       type: 'string',
       maxLength: 150,
-      description: '用法提示或文化小知識，一到兩句話，40 個中文字以內，以句號結尾',
+      description: '敘利亞方言用法提示或文化小知識，一到兩句話，40 個中文字以內，以句號結尾',
     },
   },
 };
@@ -109,29 +109,30 @@ function tidy(card) {
   return card;
 }
 
-const INSTRUCTIONS = `你是阿拉伯語教學專家，服務對象是說繁體中文（台灣）的初學者。
+const INSTRUCTIONS = `你是敘利亞阿拉伯語（Syrian Levantine Arabic / 敘利亞方言）教學專家，服務對象是說繁體中文（台灣）的初學者。
 
 使用者會輸入「中文」或「阿拉伯語」，可能是單字或短句。請據此製作一張學習卡片：
 
 【如果使用者輸入阿拉伯語（單字或短句）】
 - arabic 欄位必須直接使用使用者輸入的該阿拉伯單字或句子，絕對不可將其改寫、替換、簡化、補母音符號或強制轉為詞典形（如單數形或動詞原形）。必須完全保持使用者輸入的原文。
 - chinese 欄位填寫該阿拉伯語單字或句子的繁體中文翻譯與介紹，chinese_alt 可放其他常見譯法。
-- transliteration 欄位提供對應使用者輸入原文字句的學術拉丁轉寫。
+- transliteration 欄位提供對應使用者輸入原文字句的敘利亞阿拉伯語學術拉丁轉寫。
 - pos 欄位標明詞性或類型（例如「短句」、「動詞短語」、「名詞（陰性）」、「動詞」等）。
 - 若輸入為短句或非名詞，plural、plural_translit、root 若不適用可留空字串。
 
 【如果使用者輸入中文】
-- 將中文翻譯為現代標準阿拉伯語（MSA, الفصحى）。
-- 名詞請以單數、不帶冠詞的形式作為詞條；動詞請用第三人稱陽性單數過去式（詞典形）。
-- 阿拉伯語詞條要標註完整的短母音符號（harakat）。
+- 將中文翻譯為「敘利亞阿拉伯語」（Syrian Levantine Arabic / 敘利亞方言）。
+- 必須優先提供敘利亞當地日常生活實際使用的口語詞彙與方言習慣表達（例如「你好」用 Marḥaba 或 Shlōnak、「我想」用 Biddī 等）。若該詞彙在敘利亞方言與現代標準阿拉伯語（MSA）中相同，則輸出該通用形式。
+- 名詞請以單數、不帶冠詞的形式作為詞條；動詞請用敘利亞口語常見之動詞詞典形或第三人稱陽性單數過去式。
+- 阿拉伯語詞條（arabic）必須標註完整的短母音符號（harakat），準確反映敘利亞方言的實際發音與讀法。
 
 【通用規則】
 - 所有中文說明使用繁體中文、台灣用語，不要用簡體或中國用語。
-- note 要寫得有趣且實用，例如使用場合、禮節、與文化的關聯或文法提示，不要空泛。
+- note 要寫得有趣且實用，重點放在「敘利亞方言用語習慣」、「使用場合禮節」、「與現代標準阿拉伯語（MSA）的差異」或「敘利亞/黎凡特文化」，不要空泛。
   一到兩句話就好（40 個中文字以內），寫滿字數不是目標，簡短精準比長篇更好。
 - note 只寫給學習者看的內容本身，不要提到字數、格式或你被交代的規則。
 - 使用者沒學過阿拉伯字母，主要靠拉丁轉寫學發音，所以轉寫要準確、一致，
-  並使用常見的學術轉寫慣例（如 ā ī ū ṣ ḍ ṭ ẓ ḥ ʿ ʾ）。
+  並使用常見的學術轉寫慣例（如 ā ī ū ṣ ḍ ṭ ẓ ḥ ʿ ʾ ō ē），真實反映敘利亞方言發音。
 - 除了阿拉伯文、繁體中文和拉丁轉寫之外，不要出現任何其他文字系統的字元。`;
 
 export default async function handler(req, res) {

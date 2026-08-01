@@ -6,11 +6,11 @@ import PlayButton from '../components/PlayButton.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { generateCard } from '../lib/api.js';
 import { addCard, getLexicon, saveLexicon } from '../lib/store.js';
-import { categoryIcon } from '../lib/categories.js';
+import { categoryIcon, normalizeCategory } from '../lib/categories.js';
 import { prefetch } from '../lib/audio.js';
 import Loading from '../components/Loading.jsx';
 
-const SUGGESTIONS = ['你好', '謝謝', '水', '朋友', '明天', 'شُكْراً', '我想喝咖啡'];
+const SUGGESTIONS = ['你好', '謝謝', '水', '我想喝咖啡', 'شو (什麼)', 'مَرْحَبَا', 'بِدِّي'];
 
 export default function Add({ room, uid, voice }) {
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ export default function Add({ room, uid, voice }) {
       <div className="page">
         {showHint && (
           <p className="muted" style={{ marginTop: 16 }}>
-            輸入中文或阿拉伯語都可以，AI 會補上拼音、母音符號、複數、詞根和文化小知識，
+            輸入中文或阿拉伯語都可以，AI 會補上敘利亞方言拼音、母音符號、複數、詞根和文化小知識，
             做好的卡片會加進「{room.name}」給大家一起用。
           </p>
         )}
@@ -132,7 +132,7 @@ export default function Add({ room, uid, voice }) {
               <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span className="tag">
                   <HugeiconsIcon icon={categoryIcon(preview.card.category)} size={14} strokeWidth={2} />
-                  {preview.card.category}
+                  {normalizeCategory(preview.card.category)}
                 </span>
                 <span className="tag">{preview.card.pos}</span>
               </div>

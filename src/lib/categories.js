@@ -9,13 +9,14 @@ import {
 } from '@hugeicons/core-free-icons';
 
 export const CATEGORIES = [
-  '問候寒暄', '日常對話', '飲食', '旅行交通', '購物數字',
+  '日常對話', '飲食', '旅行交通', '購物數字',
   '時間日期', '家庭人物', '身體健康', '情緒感受', '自然天氣',
   '居家生活', '工作學習', '動詞', '形容詞', '宗教文化', '其他',
 ];
 
 const ICONS = {
-  問候寒暄: HandPrayerIcon,
+  問候寒暄: BubbleChatIcon,
+  '問候、寒暄': BubbleChatIcon,
   日常對話: BubbleChatIcon,
   飲食: Restaurant01Icon,
   旅行交通: Airplane01Icon,
@@ -33,4 +34,9 @@ const ICONS = {
   其他: SparklesIcon,
 };
 
-export const categoryIcon = (c) => ICONS[c] || SparklesIcon;
+export const normalizeCategory = (c) => {
+  if (!c || c === '問候寒暄' || c === '問候、寒暄') return '日常對話';
+  return c;
+};
+
+export const categoryIcon = (c) => ICONS[normalizeCategory(c)] || SparklesIcon;

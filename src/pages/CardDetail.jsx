@@ -9,7 +9,7 @@ import BottomSheet from '../components/BottomSheet.jsx';
 import PlayButton from '../components/PlayButton.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { deleteCard, setStarred } from '../lib/store.js';
-import { categoryIcon } from '../lib/categories.js';
+import { categoryIcon, normalizeCategory } from '../lib/categories.js';
 import { play, prefetch } from '../lib/audio.js';
 
 export default function CardDetail({ room, cards, canEdit, voice }) {
@@ -114,7 +114,7 @@ export default function CardDetail({ room, cards, canEdit, voice }) {
           >
             <span className="tag">
               <HugeiconsIcon icon={categoryIcon(card.category)} size={14} strokeWidth={2} />
-              {card.category}
+              {normalizeCategory(card.category)}
             </span>
             <span className="tag">{card.pos}</span>
             {card.starred && <span className="tag">★ 重點</span>}

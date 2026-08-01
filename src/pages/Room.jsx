@@ -11,7 +11,7 @@ import PlayButton from '../components/PlayButton.jsx';
 import ShareSheet from '../components/ShareSheet.jsx';
 import { LoginSheet } from '../components/GoogleButton.jsx';
 import { useToast } from '../components/Toast.jsx';
-import { CATEGORIES, categoryIcon } from '../lib/categories.js';
+import { CATEGORIES, categoryIcon, normalizeCategory } from '../lib/categories.js';
 import { emblemIcon } from '../lib/emblems.js';
 import { searchKey } from '../lib/arabic.js';
 import { forgetRoom } from '../lib/store.js';
@@ -39,15 +39,16 @@ export default function Room({ room, cards, loading, canEdit, isOwner, user, voi
 
   // 只顯示實際有卡片的分類，避免一長排空標籤
   const usedCategories = useMemo(() => {
-    const set = new Set(cards.map((c) => c.category));
+    const set = new Set(cards.map((c) => normalizeCategory(c.category)));
     return CATEGORIES.filter((c) => set.has(c));
   }, [cards]);
 
   const filtered = useMemo(() => {
     const key = searchKey(q);
     return cards.filter((c) => {
+      const normalizedCat = normalizeCategory(c.category);
       if (starOnly && !c.starred) return false;
-      if (cat && c.category !== cat) return false;
+      if (cat && normalizedCat !== cat) return false;
       if (!key) return true;
       // searchIndex 是新增時就算好的（阿拉伯文去母音符號 + 中文 + 拼音）
       return searchKey(c.searchIndex || `${c.arabic} ${c.chinese}`).includes(key);

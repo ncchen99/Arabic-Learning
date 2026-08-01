@@ -77,7 +77,7 @@ export default function Rooms({ user }) {
               歡迎來到 Kalima
             </p>
             <p className="muted" style={{ marginBottom: 26 }}>
-              建立一間學習教室，把單字卡整理在一起，
+              建立一間敘利亞阿拉伯語學習教室，把單字卡整理在一起，
               <br />
               再把連結分享給朋友或學生 —— 他們不用註冊就能進來學。
             </p>

@@ -161,7 +161,7 @@ export default function Settings({ user, theme, setTheme, voice, setVoice }) {
           (kalima) 在阿拉伯語裡就是「字」的意思。
         </p>
         <p style={{ margin: '0 8px 12px', color: 'var(--text-2)', lineHeight: 1.9, fontSize: 15 }}>
-          單字內容由 OpenAI 產生（現代標準阿拉伯語 MSA，含完整母音符號），
+          單字內容由 OpenAI 產生（以敘利亞阿拉伯語 / 敘利亞方言為主，含完整母音符號與拉丁轉寫），
           發音由 ElevenLabs 的阿拉伯語母語者聲音合成。每個字只會產生一次，
           之後所有教室共用，所以第二次查同樣的字是瞬間完成的。
         </p>

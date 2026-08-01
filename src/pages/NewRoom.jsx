@@ -61,7 +61,7 @@ export default function NewRoom({ user }) {
           autoFocus
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="例如：阿拉伯語入門班"
+          placeholder="例如：敘利亞阿拉伯語日常班"
           maxLength={40}
           enterKeyHint="done"
         />
