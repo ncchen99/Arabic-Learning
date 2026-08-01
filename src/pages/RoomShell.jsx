@@ -68,7 +68,7 @@ export default function RoomShell({ user, voice }) {
   const account = !isGuest(user);
   const isOwner = account && room.ownerUid === user.uid;
   const canEdit = account && (isOwner || room.openEdit === true);
-  const shared = { room, cards, user, voice, canEdit, isOwner };
+  const shared = { room, cards, loading, user, voice, canEdit, isOwner };
   const home = `/r/${room.id}`;
 
   return (

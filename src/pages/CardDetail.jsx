@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Delete02Icon, MoreVerticalIcon, StarIcon, SnailIcon, Copy01Icon, VolumeHighIcon,
@@ -7,12 +7,13 @@ import {
 import AppBar from '../components/AppBar.jsx';
 import BottomSheet from '../components/BottomSheet.jsx';
 import PlayButton from '../components/PlayButton.jsx';
+import Loading from '../components/Loading.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { deleteCard, setStarred } from '../lib/store.js';
 import { categoryIcon, normalizeCategory } from '../lib/categories.js';
 import { play, prefetch } from '../lib/audio.js';
 
-export default function CardDetail({ room, cards, canEdit, voice }) {
+export default function CardDetail({ room, cards, loading, canEdit, voice }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
@@ -27,17 +28,16 @@ export default function CardDetail({ room, cards, canEdit, voice }) {
     [card.arabic, card.plural, card.root].forEach((t) => t && prefetch(t, voice));
   }, [card, voice]);
 
-  if (!card) {
+  if (loading) {
     return (
-      <>
-        <AppBar title="單字卡" onBack={() => navigate(`/r/${room.id}`)} />
-        <div className="page">
-          <div className="empty">
-            <p className="muted">找不到這張單字卡</p>
-          </div>
-        </div>
-      </>
+      <div className="page">
+        <Loading size="lg" fullPage />
+      </div>
     );
+  }
+
+  if (!card) {
+    return <Navigate to={`/r/${room.id}`} replace />;
   }
 
   async function speak(text, rate = 1) {
@@ -72,8 +72,8 @@ export default function CardDetail({ room, cards, canEdit, voice }) {
 
   async function remove() {
     try {
-      await deleteCard(room.id, card.id);
       navigate(`/r/${room.id}`, { replace: true });
+      await deleteCard(room.id, card.id);
     } catch {
       toast('刪除失敗');
     }
