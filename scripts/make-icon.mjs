@@ -1,72 +1,74 @@
 #!/usr/bin/env node
-/* 產生 App Icon 的來源 SVG：khatam（八角星）金色徽章 × 午夜藍
-   幾何用計算的，確保每個角度都精準。
-   產出 public/icon.svg，再交給 @vite-pwa/assets-generator 轉成整套 PNG。 */
+/* 產生 Kalima 阿拉伯語學習小教室 PWA App Icon
+   使用 Hugeicons 中的 AlphabetArabicIcon / BookOpen01Icon 圖標
+   滿版 Midnight Desert 深青藍背景 × 溫潤黃銅金漸層，確保 iOS 與 Android 100% 滿版 cover 填滿。 */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AlphabetArabicIcon, BookOpen01Icon } from '@hugeicons/core-free-icons';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const C = 256; // 畫布中心
 
-/** 產生 n 角星的路徑（2n 個頂點，外半徑與內半徑交替） */
-function star(points, R, r, rotate = 0) {
-  const step = Math.PI / points;
-  const start = -Math.PI / 2 + rotate;
-  const pts = [];
-  for (let i = 0; i < points * 2; i++) {
-    const rad = i % 2 === 0 ? R : r;
-    const a = start + i * step;
-    pts.push(`${(C + rad * Math.cos(a)).toFixed(2)} ${(C + rad * Math.sin(a)).toFixed(2)}`);
-  }
-  return `M${pts.join('L')}Z`;
+/** 將 Hugeicons 圖標資料轉為 SVG path 元素 */
+function renderIconPaths(iconData, strokeColor = 'url(#gold)', strokeWidth = 1.75) {
+  return iconData.map(([tag, attrs]) => {
+    const a = { ...attrs };
+    delete a.key;
+    a.stroke = strokeColor;
+    if (a.fill === 'currentColor') a.fill = strokeColor;
+    else if (!a.fill) a.fill = 'none';
+    
+    const origWidth = a.strokeWidth ? parseFloat(a.strokeWidth) : 1.5;
+    a.strokeWidth = (origWidth * (strokeWidth / 1.5)).toFixed(2);
+
+    const attrStr = Object.entries(a)
+      .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}="${v}"`)
+      .join(' ');
+    return `<${tag} ${attrStr} />`;
+  }).join('\n    ');
 }
 
-/** 正多邊形 */
-function poly(sides, R, rotate = 0) {
-  const pts = [];
-  for (let i = 0; i < sides; i++) {
-    const a = -Math.PI / 2 + rotate + (i * 2 * Math.PI) / sides;
-    pts.push(`${(C + R * Math.cos(a)).toFixed(2)} ${(C + R * Math.sin(a)).toFixed(2)}`);
-  }
-  return `M${pts.join('L')}Z`;
-}
+// 選用 Hugeicons 的 AlphabetArabicIcon (代表阿拉伯語字母/語言學習)
+const iconPaths = renderIconPaths(AlphabetArabicIcon, 'url(#gold)', 1.8);
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
+    <!-- 午夜沙漠深色背景漸層 -->
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#16394a"/>
-      <stop offset="1" stop-color="#0a161d"/>
+      <stop offset="0%" stop-color="#14303c"/>
+      <stop offset="100%" stop-color="#0c1a21"/>
     </linearGradient>
-    <linearGradient id="gold" x1="0.2" y1="0" x2="0.8" y2="1">
-      <stop offset="0" stop-color="#f2d79b"/>
-      <stop offset="0.45" stop-color="#d9a94e"/>
-      <stop offset="1" stop-color="#a9762a"/>
+
+    <!-- 黃銅金金屬漸層 -->
+    <linearGradient id="gold" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0%" stop-color="#f5e1ad"/>
+      <stop offset="40%" stop-color="#c4a05c"/>
+      <stop offset="100%" stop-color="#967232"/>
     </linearGradient>
+
+    <!-- 立體陰影 -->
+    <filter id="icon-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
   </defs>
 
-  <!-- 滿版底色，maskable 安全 -->
+  <!-- 100% 滿版 cover 背景，無圓角、無留白 -->
   <rect width="512" height="512" fill="url(#bg)"/>
 
-  <!-- 外圈細環 -->
-  <circle cx="256" cy="256" r="228" fill="none" stroke="#d9a94e" stroke-opacity=".28" stroke-width="3"/>
+  <!-- 背景點綴：微弱幾何圓環與星紋暗紋 (Safe Zone 內飾) -->
+  <circle cx="256" cy="256" r="216" fill="none" stroke="#c4a05c" stroke-opacity="0.18" stroke-width="2"/>
+  <circle cx="256" cy="256" r="184" fill="none" stroke="#c4a05c" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="5 5"/>
 
-  <!-- 主體：八角星 -->
-  <path d="${star(8, 196, 118)}" fill="url(#gold)"/>
-
-  <!-- 星內挖空的八邊形，做出「花磚」的層次 -->
-  <path d="${poly(8, 104, Math.PI / 8)}" fill="url(#bg)"/>
-
-  <!-- 中央小八角星：內外半徑比拉高，才像花磚的圓花飾而不是星芒 -->
-  <path d="${star(8, 82, 54, Math.PI / 8)}" fill="url(#gold)"/>
-
-  <!-- 中心點綴 -->
-  <circle cx="256" cy="256" r="26" fill="url(#bg)"/>
-  <circle cx="256" cy="256" r="11" fill="#f2d79b"/>
+  <!-- 主圖標：Hugeicons AlphabetArabicIcon (縮放並置中於 256, 256) -->
+  <g filter="url(#icon-shadow)" transform="translate(106, 106) scale(12.5)">
+    <g stroke-linecap="round" stroke-linejoin="round">
+      ${iconPaths}
+    </g>
+  </g>
 </svg>
 `;
 
 fs.mkdirSync(path.join(ROOT, 'public'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'public', 'icon.svg'), svg);
-console.log('✔ public/icon.svg');
+console.log('✔ public/icon.svg generated successfully!');

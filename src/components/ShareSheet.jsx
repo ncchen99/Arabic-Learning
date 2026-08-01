@@ -45,7 +45,7 @@ export default function ShareSheet({ open, onClose, room }) {
 
   return (
     <BottomSheet open={open} onClose={onClose} title="分享學習教室">
-      <p className="muted" style={{ margin: '0 8px 14px', lineHeight: 1.9 }}>
+      <p className="muted" style={{ margin: '0 8px 10px', fontSize: 13, lineHeight: 1.6 }}>
         拿到連結的人不用註冊就能進來看單字、聽發音。
         {room?.openEdit
           ? '要新增或修改單字卡，登入 Google 帳號就可以。'
@@ -59,12 +59,12 @@ export default function ShareSheet({ open, onClose, room }) {
 
       <div className="qr-box">
         <div className="qr" dangerouslySetInnerHTML={{ __html: qr }} />
-        <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
+        <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
           用相機掃一下就能加入
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, padding: '14px 8px 4px' }}>
+      <div style={{ display: 'flex', gap: 10, padding: '10px 8px 0' }}>
         {typeof navigator !== 'undefined' && navigator.share ? (
           <button className="btn btn-primary" style={{ flex: 1 }} onClick={share}>
             <HugeiconsIcon icon={Share08Icon} size={20} strokeWidth={2} />
