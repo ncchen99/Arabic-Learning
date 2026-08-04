@@ -30,7 +30,13 @@ export async function generateCard(text) {
   return card;
 }
 
-/** 產生阿拉伯語發音，回傳 base64 mp3 */
+/** 產生一張卡片的土耳其語對照區塊 */
+export async function generateTurkish({ arabic, chinese, pos }) {
+  const { tr } = await post('/api/turkish', { arabic, chinese, pos });
+  return tr;
+}
+
+/** 產生發音，回傳 base64 mp3；語言由 voice 決定 */
 export async function synthesize(text, voice = 'f') {
   const { mp3 } = await post('/api/tts', { text, voice });
   return mp3;

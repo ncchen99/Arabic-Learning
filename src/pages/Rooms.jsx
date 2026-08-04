@@ -135,7 +135,7 @@ export default function Rooms({ user }) {
             </div>
 
             {guest && (
-              <div className="card" style={{ padding: 18, marginTop: 18, textAlign: 'center' }}>
+              <div className="band" style={{ padding: '20px 2px', marginTop: 22, textAlign: 'center' }}>
                 <p className="muted" style={{ margin: '0 0 14px', lineHeight: 1.9 }}>
                   你現在是訪客，可以看和聽。
                   <br />

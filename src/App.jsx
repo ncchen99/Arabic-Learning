@@ -19,6 +19,8 @@ export default function App() {
   const [user, setUser] = useState(undefined); // undefined = 還在確認登入狀態
   const [theme, setTheme] = usePref('kalima.theme', 'auto');
   const [voice, setVoice] = usePref('kalima.voice', 'sana', normalizeVoice);
+  const [turkish, setTurkish] = usePref('kalima.turkish', 'on');
+  const showTurkish = turkish === 'on';
 
   useEffect(() => watchAuth(setUser), []);
 
@@ -53,7 +55,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Rooms user={user} />} />
           <Route path="/new" element={<NewRoom user={user} />} />
-          <Route path="/r/:roomId/*" element={<RoomShell user={user} voice={voice} />} />
+          <Route
+            path="/r/:roomId/*"
+            element={<RoomShell user={user} voice={voice} turkish={showTurkish} />}
+          />
           <Route
             path="/settings"
             element={
@@ -63,6 +68,8 @@ export default function App() {
                 setTheme={setTheme}
                 voice={voice}
                 setVoice={setVoice}
+                turkish={showTurkish}
+                setTurkish={(on) => setTurkish(on ? 'on' : 'off')}
               />
             }
           />

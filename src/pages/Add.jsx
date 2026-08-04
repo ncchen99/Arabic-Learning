@@ -142,7 +142,7 @@ export default function Add({ room, uid, voice }) {
             </div>
 
             {preview.card.note && (
-              <div className="card" style={{ padding: '14px 16px', marginTop: 12 }}>
+              <div className="band" style={{ marginTop: 14 }}>
                 <p className="muted" style={{ margin: 0, lineHeight: 1.8 }}>
                   {preview.card.note}
                 </p>

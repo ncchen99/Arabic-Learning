@@ -17,6 +17,19 @@ export const DIALECT_LABEL = {
 
 export const DEFAULT_VOICE = 'sana';
 
+/* 土耳其語的聲音（伊斯坦堡腔＝官方標準語）。
+   刻意不做成另一個設定項：直接跟著使用者選的阿拉伯語聲音的性別走，
+   同一張卡片兩種語言聽起來才像同一個人在教。 */
+export const TURKISH_VOICES = {
+  f: { id: 'mine', name: 'Mine' },
+  m: { id: 'selim', name: 'Selim' },
+};
+
+export function turkishVoiceFor(arabicVoice) {
+  const found = VOICES.find((x) => x.id === normalizeVoice(arabicVoice));
+  return TURKISH_VOICES[found.gender].id;
+}
+
 /* 舊版存在 localStorage 的是 f／m */
 const LEGACY = { f: 'sana', m: 'anas' };
 

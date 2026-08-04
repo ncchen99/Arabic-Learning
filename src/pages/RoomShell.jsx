@@ -11,7 +11,7 @@ import { rememberRoom, watchCards, watchRoom } from '../lib/store.js';
 import Loading from '../components/Loading.jsx';
 
 /** 一間教室底下的所有頁面共用同一份資料訂閱 */
-export default function RoomShell({ user, voice }) {
+export default function RoomShell({ user, voice, turkish }) {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const [room, setRoom] = useState(undefined); // undefined = 還在載入
@@ -68,7 +68,7 @@ export default function RoomShell({ user, voice }) {
   const account = !isGuest(user);
   const isOwner = account && room.ownerUid === user.uid;
   const canEdit = account && (isOwner || room.openEdit === true);
-  const shared = { room, cards, loading, user, voice, canEdit, isOwner };
+  const shared = { room, cards, loading, user, voice, turkish, canEdit, isOwner };
   const home = `/r/${room.id}`;
 
   return (

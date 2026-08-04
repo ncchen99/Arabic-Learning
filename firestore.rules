@@ -108,6 +108,20 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    /* ── 共用快取：土耳其語對照 ─────────────────────────────
+       跟 lexicon 一樣的規則：訪客讀得到，只能新增不能竄改。       */
+
+    match /turkish/{hash} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+                    && request.resource.data.turkish is string
+                    && request.resource.data.turkish.size() >= 1
+                    && request.resource.data.turkish.size() <= 200
+                    && request.resource.data.size() < 12;
+      allow update, delete: if false;
+    }
+
     /* ── 共用快取：ElevenLabs 產生的語音（base64 mp3）──────── */
 
     match /audio/{hash} {

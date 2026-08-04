@@ -82,7 +82,7 @@ export default function NewRoom({ user }) {
         </div>
 
         <div className="section-title">誰可以編輯</div>
-        <div className="card" style={{ padding: '4px 8px' }}>
+        <div className="band tight">
           {[
             {
               id: true,

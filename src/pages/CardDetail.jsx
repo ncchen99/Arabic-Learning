@@ -7,13 +7,14 @@ import {
 import AppBar from '../components/AppBar.jsx';
 import BottomSheet from '../components/BottomSheet.jsx';
 import PlayButton from '../components/PlayButton.jsx';
+import TurkishBlock from '../components/TurkishBlock.jsx';
 import Loading from '../components/Loading.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { deleteCard, setStarred } from '../lib/store.js';
 import { categoryIcon, normalizeCategory } from '../lib/categories.js';
 import { play, prefetch } from '../lib/audio.js';
 
-export default function CardDetail({ room, cards, loading, canEdit, voice }) {
+export default function CardDetail({ room, cards, loading, canEdit, voice, turkish }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
@@ -132,7 +133,7 @@ export default function CardDetail({ room, cards, loading, canEdit, voice }) {
         {(card.plural || card.root) && (
           <>
             <div className="section-title">構詞</div>
-            <div className="card" style={{ padding: '4px 16px' }}>
+            <div className="band tight">
               {card.plural && (
                 <button className="speakable" onClick={() => speak(card.plural)}>
                   <span>
@@ -163,20 +164,16 @@ export default function CardDetail({ room, cards, loading, canEdit, voice }) {
         {card.note && (
           <>
             <div className="section-title">小知識</div>
-            <div
-              className="card"
-              style={{
-                padding: '16px 18px',
-                borderInlineStart: '3px solid var(--gold)',
-                background: 'var(--gold-dim)',
-              }}
-            >
+            <div className="band">
               <p style={{ margin: 0, fontSize: 15, lineHeight: 1.85, color: 'var(--text-2)' }}>
                 {card.note}
               </p>
             </div>
           </>
         )}
+
+        {/* 順便學土耳其語：同一個意思在土耳其官方標準語怎麼說 */}
+        <TurkishBlock card={card} voice={voice} enabled={turkish} onError={toast} />
       </div>
 
       {/* 更多操作用 Bottom Sheet，不是桌機式下拉選單 */}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Logout03Icon, Moon02Icon, Sun03Icon, UserCircleIcon, VolumeHighIcon, InformationCircleIcon,
+  TulipIcon,
 } from '@hugeicons/core-free-icons';
 import AppBar from '../components/AppBar.jsx';
 import BottomSheet from '../components/BottomSheet.jsx';
@@ -15,7 +16,7 @@ import { DIALECT_LABEL, VOICES, voiceLabel } from '../lib/voices.js';
 /* 讓使用者試聽用的短句：「你好」 */
 const SAMPLE = 'مَرْحَباً';
 
-export default function Settings({ user, theme, setTheme, voice, setVoice }) {
+export default function Settings({ user, theme, setTheme, voice, setVoice, turkish, setTurkish }) {
   const navigate = useNavigate();
   const toast = useToast();
   const [voiceSheet, setVoiceSheet] = useState(false);
@@ -31,7 +32,7 @@ export default function Settings({ user, theme, setTheme, voice, setVoice }) {
 
       <div className="page">
         {guest ? (
-          <div className="card" style={{ padding: 20, marginTop: 16, textAlign: 'center' }}>
+          <div className="band lead" style={{ padding: '26px 2px', textAlign: 'center' }}>
             <HugeiconsIcon icon={UserCircleIcon} size={44} strokeWidth={1.5} />
             <p style={{ margin: '10px 0 4px', fontWeight: 600 }}>你現在是訪客</p>
             <p className="muted" style={{ margin: '0 0 16px', lineHeight: 1.9 }}>
@@ -43,8 +44,8 @@ export default function Settings({ user, theme, setTheme, voice, setVoice }) {
           </div>
         ) : (
           <div
-            className="card"
-            style={{ padding: 18, marginTop: 16, display: 'flex', gap: 14, alignItems: 'center' }}
+            className="band lead"
+            style={{ padding: '20px 2px', display: 'flex', gap: 14, alignItems: 'center' }}
           >
             {user.photoURL ? (
               <img
@@ -70,11 +71,24 @@ export default function Settings({ user, theme, setTheme, voice, setVoice }) {
         )}
 
         <div className="section-title">偏好</div>
-        <div className="card" style={{ padding: '4px 8px' }}>
+        <div className="band tight">
           <button className="sheet-item" onClick={() => setVoiceSheet(true)}>
             <HugeiconsIcon icon={VolumeHighIcon} size={22} strokeWidth={2} />
             <span className="label">發音聲音</span>
             <span className="muted">{voiceLabel(voice)}</span>
+          </button>
+          <button
+            className="sheet-item"
+            role="switch"
+            aria-checked={turkish}
+            onClick={() => setTurkish(!turkish)}
+          >
+            <HugeiconsIcon icon={TulipIcon} size={22} strokeWidth={2} />
+            <span className="label">
+              土耳其語對照
+              <div className="muted">單字卡下方多一個區塊</div>
+            </span>
+            <span className="switch" aria-hidden />
           </button>
           <button className="sheet-item" onClick={() => setThemeSheet(true)}>
             <HugeiconsIcon icon={theme === 'light' ? Sun03Icon : Moon02Icon} size={22} strokeWidth={2} />
@@ -90,7 +104,7 @@ export default function Settings({ user, theme, setTheme, voice, setVoice }) {
         {!guest && (
           <>
             <div className="section-title">帳號</div>
-            <div className="card" style={{ padding: '4px 8px' }}>
+            <div className="band tight">
               <button className="sheet-item danger" onClick={() => logout()}>
                 <HugeiconsIcon icon={Logout03Icon} size={22} strokeWidth={2} />
                 <span className="label">登出</span>
@@ -107,6 +121,7 @@ export default function Settings({ user, theme, setTheme, voice, setVoice }) {
       <BottomSheet open={voiceSheet} onClose={() => setVoiceSheet(false)} title="發音聲音">
         <p className="muted" style={{ margin: '0 8px 10px', lineHeight: 1.8 }}>
           全部都是阿拉伯語母語者的聲音。點右邊的播放鍵可以先試聽。
+          土耳其語會自動配同性別的伊斯坦堡母語者。
         </p>
         {VOICES.map((v, i) => (
           <div key={v.id}>
@@ -162,8 +177,13 @@ export default function Settings({ user, theme, setTheme, voice, setVoice }) {
         </p>
         <p style={{ margin: '0 8px 12px', color: 'var(--text-2)', lineHeight: 1.9, fontSize: 15 }}>
           單字內容由 OpenAI 產生（以敘利亞阿拉伯語 / 敘利亞方言為主，含完整母音符號與拉丁轉寫），
-          發音由 ElevenLabs 的阿拉伯語母語者聲音合成。每個字只會產生一次，
+          發音由 ElevenLabs 的母語者聲音合成。每個字只會產生一次，
           之後所有教室共用，所以第二次查同樣的字是瞬間完成的。
+        </p>
+        <p style={{ margin: '0 8px 12px', color: 'var(--text-2)', lineHeight: 1.9, fontSize: 15 }}>
+          每張卡片下方還有土耳其官方標準語（İstanbul Türkçesi）的對照。
+          土耳其語裡有大量從阿拉伯語借來的字，遇到的時候會特別標出來，
+          等於一次記兩個語言。
         </p>
         <p className="muted" style={{ margin: '0 8px' }}>
           語音會存在裝置上，已經聽過的字離線也能播放。

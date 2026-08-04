@@ -8,9 +8,11 @@ import AppBar from '../components/AppBar.jsx';
 import PlayButton from '../components/PlayButton.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { prefetch } from '../lib/audio.js';
+import { prefetchTurkish, useTurkish } from '../lib/turkish.js';
+import { turkishVoiceFor } from '../lib/voices.js';
 
 /** 翻卡複習：先看阿拉伯文，點一下才翻出中文 */
-export default function Study({ room, cards, voice }) {
+export default function Study({ room, cards, voice, turkish }) {
   const navigate = useNavigate();
   const toast = useToast();
   const [starOnly, setStarOnly] = useState(false);
@@ -44,6 +46,13 @@ export default function Study({ room, cards, voice }) {
     if (deck[i]) prefetch(deck[i].arabic, voice);
     if (deck[i + 1]) prefetch(deck[i + 1].arabic, voice);
   }, [deck, i, voice]);
+
+  // 這張卡的土耳其語先備好，翻面時就不用等
+  useEffect(() => {
+    if (turkish && deck[i]) prefetchTurkish(deck[i]);
+  }, [deck, i, turkish]);
+
+  const { tr } = useTurkish(card, turkish && flipped);
 
   const go = (d) => {
     setFlipped(false);
@@ -131,6 +140,18 @@ export default function Study({ room, cards, voice }) {
                     {card.chinese}
                   </p>
                   <p className="muted" style={{ margin: 0 }}>{card.pos}</p>
+                  {tr && (
+                    <div className="tr-inline" onClick={(e) => e.stopPropagation()}>
+                      {tr.turkish}
+                      <PlayButton
+                        text={tr.turkish}
+                        voice={turkishVoiceFor(voice)}
+                        size={20}
+                        label="播放土耳其語發音"
+                        onError={toast}
+                      />
+                    </div>
+                  )}
                 </>
               ) : (
                 <p className="muted" style={{ marginTop: 22 }}>

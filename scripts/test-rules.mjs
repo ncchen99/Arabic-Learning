@@ -140,6 +140,14 @@ check('完全沒登入不能讀共用快取', 'deny', await call('GET', '/audio/
 check('沒人能竄改既有的 lexicon', 'deny',
   await call('PATCH', '/lexicon/zzruleslex?updateMask.fieldPaths=arabic', owner.idToken,
     { fields: { arabic: S('x') } }));
+check('訪客可以讀土耳其語快取', 'allow', await call('GET', '/turkish/none', guest.idToken));
+check('完全沒登入不能讀土耳其語快取', 'deny', await call('GET', '/turkish/none', null));
+check('訪客可以新增土耳其語快取', 'allow',
+  await call('POST', '/turkish?documentId=zzrulestr', guest.idToken,
+    { fields: { turkish: S('teşekkürler'), note: S('測試') } }));
+check('沒人能竄改既有的土耳其語快取', 'deny',
+  await call('PATCH', '/turkish/zzrulestr?updateMask.fieldPaths=turkish', owner.idToken,
+    { fields: { turkish: S('駭客改的') } }));
 
 /* ── 我的教室清單 ───────────────────────────────────── */
 check('別人不能看我的教室清單', 'deny',
@@ -154,7 +162,7 @@ console.log(`\n${results.filter((r) => r.ok).length}/${results.length} 通過`);
 for (const p of [
   `/rooms/${openRoom}/cards/c1`, `/rooms/${lockRoom}/cards/c3`,
   `/rooms/${openRoom}`, `/rooms/${lockRoom}`,
-  `/users/${owner.uid}/rooms/${openRoom}`,
+  `/users/${owner.uid}/rooms/${openRoom}`, '/turkish/zzrulestr',
 ]) {
   await fetch(BASE + p, { method: 'DELETE', headers: { Authorization: `Bearer ${ADMIN}` } });
 }

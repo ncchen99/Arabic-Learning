@@ -55,7 +55,7 @@ export default function RoomSettings({ room, cards, isOwner, user }) {
       <AppBar title={isOwner ? '教室設定' : '教室資訊'} onBack={back} />
 
       <div className="page">
-        <div className="card" style={{ padding: 18, marginTop: 16, textAlign: 'center' }}>
+        <div className="band lead" style={{ padding: '22px 2px', textAlign: 'center' }}>
           <span className="emblem lg" style={{ margin: '0 auto 10px' }}>
             <HugeiconsIcon icon={emblemIcon(room.emblem)} size={30} strokeWidth={1.7} />
           </span>
@@ -66,7 +66,7 @@ export default function RoomSettings({ room, cards, isOwner, user }) {
           </div>
         </div>
 
-        <div className="card" style={{ padding: '4px 8px', marginTop: 12 }}>
+        <div className="band tight" style={{ borderTop: 'none' }}>
           <button className="sheet-item" onClick={() => setShare(true)}>
             <HugeiconsIcon icon={Share08Icon} size={22} strokeWidth={2} />
             <span className="label">分享學習教室</span>
@@ -109,7 +109,7 @@ export default function RoomSettings({ room, cards, isOwner, user }) {
             </div>
 
             <div className="section-title">誰可以編輯</div>
-            <div className="card" style={{ padding: '4px 8px' }}>
+            <div className="band tight">
               {[
                 {
                   id: true,
@@ -140,7 +140,7 @@ export default function RoomSettings({ room, cards, isOwner, user }) {
             </div>
 
             <div className="section-title">危險區</div>
-            <div className="card" style={{ padding: '4px 8px' }}>
+            <div className="band tight">
               <button className="sheet-item danger" onClick={() => setConfirm(true)}>
                 <HugeiconsIcon icon={Delete02Icon} size={22} strokeWidth={2} />
                 <span className="label">

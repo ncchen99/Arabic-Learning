@@ -189,6 +189,25 @@ export async function saveLexicon(text, card) {
   }
 }
 
+/* ── 共用快取：土耳其語對照 ─────────────────────────────
+   跟卡片分開存，這樣這個功能上線之前建立的舊卡片也補得上，
+   而且同一個字全站只會問一次 AI。 */
+
+export const turkishKey = (arabic) => hashKey(`tr:${searchKey(arabic)}`);
+
+export async function getTurkishDoc(arabic) {
+  const snap = await getDoc(doc(db, 'turkish', turkishKey(arabic)));
+  return snap.exists() ? snap.data() : null;
+}
+
+export async function saveTurkishDoc(arabic, tr) {
+  try {
+    await setDoc(doc(db, 'turkish', turkishKey(arabic)), tr);
+  } catch {
+    /* 快取寫入失敗不影響使用者，安靜略過 */
+  }
+}
+
 /* ── 共用快取：語音 ─────────────────────────────────────── */
 
 export const audioKey = (text, voice) => hashKey(`${voice}:${text}`);
