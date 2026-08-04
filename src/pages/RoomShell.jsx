@@ -76,7 +76,13 @@ export default function RoomShell({ user, voice, turkish }) {
       <Route index element={<Room {...shared} loading={loading} />} />
       <Route
         path="add"
-        element={canEdit ? <Add room={room} uid={user.uid} voice={voice} /> : <Navigate to={home} replace />}
+        element={
+          canEdit ? (
+            <Add room={room} uid={user.uid} voice={voice} turkish={turkish} />
+          ) : (
+            <Navigate to={home} replace />
+          )
+        }
       />
       <Route path="card/:id" element={<CardDetail {...shared} />} />
       <Route path="study" element={<Study {...shared} />} />

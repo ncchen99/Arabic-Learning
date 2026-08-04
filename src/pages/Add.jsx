@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../components/AppBar.jsx';
 import PlayButton from '../components/PlayButton.jsx';
+import TurkishBlock from '../components/TurkishBlock.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { generateCard } from '../lib/api.js';
 import { addCard, getLexicon, saveLexicon } from '../lib/store.js';
@@ -10,9 +11,10 @@ import { categoryIcon, normalizeCategory } from '../lib/categories.js';
 import { prefetch } from '../lib/audio.js';
 import Loading from '../components/Loading.jsx';
 
-const SUGGESTIONS = ['你好', '謝謝', '水', '我想喝咖啡', 'شو (什麼)', 'مَرْحَبَا', 'بِدِّي'];
+/* 三種輸入語言都給範例，讓人一眼看出土耳其文也可以直接打 */
+const SUGGESTIONS = ['你好', '謝謝', '我想喝咖啡', 'مَرْحَبَا', 'بِدِّي', 'kitap', 'teşekkürler'];
 
-export default function Add({ room, uid, voice }) {
+export default function Add({ room, uid, voice, turkish }) {
   const navigate = useNavigate();
   const toast = useToast();
   const [text, setText] = useState('');
@@ -67,8 +69,8 @@ export default function Add({ room, uid, voice }) {
       <div className="page">
         {showHint && (
           <p className="muted" style={{ marginTop: 16 }}>
-            輸入中文或阿拉伯語都可以，AI 會補上敘利亞方言拼音、母音符號、複數、詞根和文化小知識，
-            做好的卡片會加進「{room.name}」給大家一起用。
+            輸入中文、阿拉伯語或土耳其語都可以，AI 會補上敘利亞方言拼音、母音符號、複數、詞根、
+            文化小知識和土耳其語對照，做好的卡片會加進「{room.name}」給大家一起用。
           </p>
         )}
 
@@ -84,7 +86,7 @@ export default function Add({ room, uid, voice }) {
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="例如：謝謝、水、قَهْوَة"
+            placeholder="例如：謝謝、قَهْوَة、kahve"
             enterKeyHint="go"
             maxLength={40}
           />
@@ -148,6 +150,9 @@ export default function Add({ room, uid, voice }) {
                 </p>
               </div>
             )}
+
+            {/* 存進教室之前就先看到土耳其語對照，而不是等卡片建好才知道 */}
+            <TurkishBlock card={preview.card} voice={voice} enabled={turkish} onError={toast} />
 
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
               <button className="btn btn-ghost" onClick={() => generate()} disabled={saving}>

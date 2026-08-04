@@ -22,19 +22,20 @@ function splitSource(s = '') {
 }
 
 /* 土耳其文用拉丁字母，但有幾個字母跟英文念法差很多，
-   學習者第一次看到 kütüphane 一定會卡住，所以放一張對照表。 */
+   學習者第一次看到 kütüphane 一定會卡住，所以放一張對照表。
+   說明刻意寫得很短 —— 這張表要能一次塞進手機一屏，不用捲動。 */
 const SOUNDS = [
-  ['ı / I', '沒有點的 i。像沒有嘴形的「呃」，舌根往後'],
-  ['i / İ', '有點的 i，就是「一」；大寫 İ 上面那一點不能省'],
-  ['ö', '嘴唇像念「ㄛ」，舌頭放在念「ㄝ」的位置'],
+  ['ı / I', '沒有點的 i，像悶住的「呃」'],
+  ['i / İ', '有點的 i，就是「一」'],
+  ['ö', '嘴型念「ㄛ」，舌頭念「ㄝ」'],
   ['ü', '就是注音的「ㄩ」'],
-  ['c', '像英文 jam 的 j（cami「清真寺」念 ㄐㄚ-ㄇㄧ）'],
-  ['ç', '像注音的「ㄑ」或英文的 ch'],
-  ['ş', '像注音的「ㄕ」或英文的 sh'],
-  ['ğ', '本身不發音，只把前面的母音拉長（dağ 念成「daa」）'],
+  ['c', '英文 jam 的 j（cami＝ㄐㄚㄇㄧ）'],
+  ['ç', '注音的「ㄑ」、英文 ch'],
+  ['ş', '注音的「ㄕ」、英文 sh'],
+  ['ğ', '不發音，把前面母音拉長'],
 ];
 
-/** 單字卡下方的土耳其語對照。內容是需要時才產生，之後全站共用。 */
+/** 單字卡的土耳其語對照。內容是需要時才產生，之後全站共用。 */
 export default function TurkishBlock({ card, voice, enabled = true, onError }) {
   const [help, setHelp] = useState(false);
   const { tr, loading, error, retry } = useTurkish(card, enabled);
@@ -46,17 +47,18 @@ export default function TurkishBlock({ card, voice, enabled = true, onError }) {
 
   return (
     <>
-      <div className="tr-head">
-        <span className="lbl">
-          <HugeiconsIcon icon={TulipIcon} size={16} strokeWidth={2} />
-          土耳其語
-        </span>
-        <button className="icon-btn" onClick={() => setHelp(true)} aria-label="土耳其語字母怎麼念">
-          <HugeiconsIcon icon={InformationCircleIcon} size={20} strokeWidth={2} />
-        </button>
-      </div>
+      {/* 自己就是一張卡；裡面的分區一律用線切開，不再套第二層卡片 */}
+      <section className="tr-card">
+        <div className="tr-card-head">
+          <span className="lbl">
+            <HugeiconsIcon icon={TulipIcon} size={16} strokeWidth={2} />
+            土耳其語
+          </span>
+          <button className="icon-btn" onClick={() => setHelp(true)} aria-label="土耳其語字母怎麼念">
+            <HugeiconsIcon icon={InformationCircleIcon} size={20} strokeWidth={2} />
+          </button>
+        </div>
 
-      <div className="band tr-band">
         {loading ? (
           <div className="tr-skeleton">
             <span className="spin" />
@@ -111,12 +113,11 @@ export default function TurkishBlock({ card, voice, enabled = true, onError }) {
             {tr.note && <p className="tr-note">{tr.note}</p>}
           </>
         ) : null}
-      </div>
+      </section>
 
       <BottomSheet open={help} onClose={() => setHelp(false)} title="土耳其語字母怎麼念">
-        <p className="muted" style={{ margin: '0 8px 8px', lineHeight: 1.8 }}>
-          土耳其語用拉丁字母，而且拼字跟發音幾乎完全對應 —— 看到怎麼寫就怎麼念。
-          只有這幾個字母跟英文不一樣：
+        <p className="muted" style={{ margin: '0 8px 6px', lineHeight: 1.7 }}>
+          土耳其語拼字幾乎等於發音，只有這幾個字母例外：
         </p>
         <table className="tr-table">
           <tbody>
@@ -128,9 +129,8 @@ export default function TurkishBlock({ card, voice, enabled = true, onError }) {
             ))}
           </tbody>
         </table>
-        <p className="muted" style={{ margin: '14px 8px 0', lineHeight: 1.8 }}>
-          重音通常落在最後一個音節。這裡的內容都是土耳其官方標準語（İstanbul
-          Türkçesi），以 TDK 辭典為準。
+        <p className="muted" style={{ margin: '10px 8px 0', lineHeight: 1.7 }}>
+          重音多半落在最後一個音節。
         </p>
       </BottomSheet>
     </>

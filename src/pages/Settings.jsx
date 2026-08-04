@@ -86,7 +86,7 @@ export default function Settings({ user, theme, setTheme, voice, setVoice, turki
             <HugeiconsIcon icon={TulipIcon} size={22} strokeWidth={2} />
             <span className="label">
               土耳其語對照
-              <div className="muted">單字卡下方多一個區塊</div>
+              <div className="muted">單字卡下方多一張對照卡</div>
             </span>
             <span className="switch" aria-hidden />
           </button>
@@ -181,9 +181,9 @@ export default function Settings({ user, theme, setTheme, voice, setVoice, turki
           之後所有教室共用，所以第二次查同樣的字是瞬間完成的。
         </p>
         <p style={{ margin: '0 8px 12px', color: 'var(--text-2)', lineHeight: 1.9, fontSize: 15 }}>
-          每張卡片下方還有土耳其官方標準語（İstanbul Türkçesi）的對照。
-          土耳其語裡有大量從阿拉伯語借來的字，遇到的時候會特別標出來，
-          等於一次記兩個語言。
+          每張卡片下方還有土耳其官方標準語（İstanbul Türkçesi）的對照，
+          新增卡片的時候直接打土耳其文也可以。土耳其語裡有大量從阿拉伯語借來的字，
+          遇到的時候會特別標出來，等於一次記兩個語言。
         </p>
         <p className="muted" style={{ margin: '0 8px' }}>
           語音會存在裝置上，已經聽過的字離線也能播放。
